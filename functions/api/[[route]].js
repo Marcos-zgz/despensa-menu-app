@@ -1,14 +1,12 @@
-// Backend API con soporte para PWA, borrado y gestión de platos
 export async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
   const path = url.pathname.replace('/api/', '');
   const method = request.method;
-
   const db = env.DB;
 
   try {
-    // 1. ENDPOINTS DE ALIMENTOS
+    // 1. ALIMENTOS
     if (path === 'alimentos') {
       if (method === 'GET') {
         const { results } = await db.prepare("SELECT * FROM alimentos ORDER BY created_at DESC").all();
@@ -17,25 +15,31 @@ export async function onRequest(context) {
       if (method === 'POST') {
         const body = await request.json();
         const id = crypto.randomUUID();
-        await db.prepare("INSERT INTO alimentos (id, nombre, icono, en_stock) VALUES (?, ?, ?, 1)")
-          .bind(id, body.nombre, body.icono).run();
+        const unidades = parseInt(body.unidades) || 1;
+        await db.prepare("INSERT INTO alimentos (id, nombre, icono, unidades, en_stock) VALUES (?, ?, ?, ?, ?)")
+          .bind(id, body.nombre, body.icono, unidades, unidades > 0 ? 1 : 0).run();
         return Response.json({ success: true, id });
       }
       if (method === 'PATCH') {
         const body = await request.json();
-        await db.prepare("UPDATE alimentos SET en_stock = ? WHERE id = ?")
-          .bind(body.en_stock, body.id).run();
+        if (body.delta !== undefined) {
+          // Sumar o restar unidades
+          await db.prepare("UPDATE alimentos SET unidades = MAX(0, unidades + ?), en_stock = CASE WHEN (unidades + ?) > 0 THEN 1 ELSE 0 END WHERE id = ?")
+            .bind(body.delta, body.delta, body.id).run();
+        } else {
+          await db.prepare("UPDATE alimentos SET en_stock = ?, unidades = ? WHERE id = ?")
+            .bind(body.en_stock, body.unidades, body.id).run();
+        }
         return Response.json({ success: true });
       }
       if (method === 'DELETE') {
         const body = await request.json();
-        await db.prepare("DELETE FROM alimentos WHERE id = ?")
-          .bind(body.id).run();
+        await db.prepare("DELETE FROM alimentos WHERE id = ?").bind(body.id).run();
         return Response.json({ success: true });
       }
     }
 
-    // 2. ENDPOINTS DE MENÚS (15 DÍAS)
+    // 2. MENÚS
     if (path === 'menu') {
       if (method === 'GET') {
         const { results } = await db.prepare("SELECT * FROM menu_dias").all();
@@ -43,7 +47,7 @@ export async function onRequest(context) {
         results.forEach(r => {
           mapa[`${r.fecha}_${r.momento}`] = {
             descripcion: r.descripcion || '',
-            consumido: r.alimentos_usados === 'consumido'
+            items: JSON.parse(r.alimentos_usados || '[]')
           };
         });
         return Response.json(mapa);
@@ -51,19 +55,19 @@ export async function onRequest(context) {
       if (method === 'POST') {
         const body = await request.json();
         const id = crypto.randomUUID();
-        const estado = body.consumido ? 'consumido' : '[]';
+        const itemsJson = JSON.stringify(body.items || []);
         await db.prepare(`
           INSERT INTO menu_dias (id, fecha, momento, descripcion, alimentos_usados)
           VALUES (?, ?, ?, ?, ?)
           ON CONFLICT(fecha, momento) DO UPDATE SET 
             descripcion = excluded.descripcion,
             alimentos_usados = excluded.alimentos_usados
-        `).bind(id, body.fecha, body.momento, body.descripcion, estado).run();
+        `).bind(id, body.fecha, body.momento, body.descripcion, itemsJson).run();
         return Response.json({ success: true });
       }
     }
 
-    // 3. ENDPOINTS DE LISTA DE LA COMPRA
+    // 3. COMPRA
     if (path === 'compra') {
       if (method === 'GET') {
         const { results } = await db.prepare("SELECT * FROM lista_compra ORDER BY comprado ASC, created_at DESC").all();
@@ -84,8 +88,7 @@ export async function onRequest(context) {
       }
       if (method === 'DELETE') {
         const body = await request.json();
-        await db.prepare("DELETE FROM lista_compra WHERE id = ?")
-          .bind(body.id).run();
+        await db.prepare("DELETE FROM lista_compra WHERE id = ?").bind(body.id).run();
         return Response.json({ success: true });
       }
     }
