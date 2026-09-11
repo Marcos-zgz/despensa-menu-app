@@ -4,76 +4,67 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Mi Despensa y Menús</title>
-  
-  <!-- Configuración PWA / Móvil -->
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#2563eb">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Despensa">
-  <link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f372.png">
-
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen pb-28 select-none">
+<body class="bg-slate-100 text-slate-800 min-h-screen pb-28 select-none">
 
   <!-- Cabecera fija -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-30 px-4 py-3 shadow-sm">
     <div class="max-w-xl mx-auto flex justify-between items-center">
       <h1 class="text-xl font-black text-slate-800 flex items-center gap-2">
-        <span class="text-2xl">🍲</span> <span id="view-title">Mi Despensa</span>
+        <span id="header-icon">🧊</span> <span id="view-title">Mi Despensa</span>
       </h1>
-      <span id="sync-status" class="text-xs font-semibold px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full">Sincronizado</span>
+      <span class="text-xs font-semibold px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full">Sincronizado</span>
     </div>
   </header>
 
-  <main class="max-w-xl mx-auto p-4">
+  <main class="max-w-xl mx-auto p-3">
     
-    <!-- VISTA 1: DESPENSA / CONGELADOR -->
-    <section id="view-stock" class="space-y-4">
-      <div class="bg-white p-2.5 rounded-2xl shadow-sm border border-slate-200 flex gap-2">
-        <input id="input-alimento" type="text" placeholder="Añadir alimento (ej: Salmón, Judías...)" 
-               class="flex-1 bg-slate-100 border-0 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-        <button onclick="agregarAlimento()" 
-                class="bg-blue-600 active:scale-95 text-white px-4 py-2 rounded-xl text-sm font-bold transition shadow-sm">
-          + Añadir
-        </button>
+    <!-- VISTA 1: DESPENSA CON CONTADOR DE UNIDADES -->
+    <section id="view-stock" class="space-y-3">
+      <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 flex flex-col gap-2">
+        <div class="flex gap-2">
+          <input id="input-alimento" type="text" placeholder="Ej: Hamburguesas, Salmón, Brócoli..." 
+                 class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+          <input id="input-unidades" type="number" value="2" min="1" 
+                 class="w-16 bg-slate-50 border border-slate-200 rounded-xl px-2 py-2 text-sm text-center font-bold outline-none">
+          <button onclick="agregarAlimento()" 
+                  class="bg-blue-600 active:scale-95 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm">
+            + Añadir
+          </button>
+        </div>
       </div>
 
       <div id="lista-alimentos" class="grid grid-cols-2 gap-2.5">
-        <div class="text-center col-span-2 py-12 text-slate-400 text-sm">Cargando despensa...</div>
+        <div class="text-center col-span-2 py-10 text-slate-400 text-sm">Cargando despensa...</div>
       </div>
     </section>
 
-    <!-- VISTA 2: PLANIFICADOR 15 DÍAS -->
+    <!-- VISTA 2: PLANIFICADOR CON SELECTOR Y DESCUENTO AUTOMÁTICO -->
     <section id="view-menu" class="hidden space-y-3">
       <div class="flex justify-between items-center px-1">
-        <span class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Planificación 15 días</span>
-        <span class="text-xs text-blue-600 font-medium">Toca "+" para añadir alimentos</span>
+        <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">Próximos 15 Días</span>
+        <span class="text-xs text-slate-400">Los platos descuentan del stock</span>
       </div>
       <div id="contenedor-dias" class="space-y-3"></div>
     </section>
 
     <!-- VISTA 3: LISTA DE LA COMPRA -->
-    <section id="view-compra" class="hidden space-y-4">
-      <div class="bg-white p-2.5 rounded-2xl shadow-sm border border-slate-200 flex gap-2">
-        <input id="input-compra" type="text" placeholder="Básicos: Aceite, Sal, Ajos, Leche..." 
-               class="flex-1 bg-slate-100 border-0 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+    <section id="view-compra" class="hidden space-y-3">
+      <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 flex gap-2">
+        <input id="input-compra" type="text" placeholder="Añadir extra: Sal, Aceite, Café..." 
+               class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
         <button onclick="agregarItemCompra()" 
-                class="bg-amber-600 active:scale-95 text-white px-4 py-2 rounded-xl text-sm font-bold transition shadow-sm">
+                class="bg-amber-600 active:scale-95 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm">
           + Añadir
         </button>
       </div>
 
       <div class="flex justify-between items-center px-1">
-        <div class="flex items-center gap-2">
-          <span class="text-xs font-semibold text-slate-600" id="conteo-compra">0 pendientes</span>
-          <button onclick="toggleModoSuper()" id="btn-super" 
-                  class="text-xs px-2 py-1 rounded-lg bg-slate-200 text-slate-700 font-medium">
-            Modo Súper: Off
-          </button>
-        </div>
-        <button onclick="limpiarComprados()" class="text-xs text-rose-500 font-medium active:underline">Limpiar comprados</button>
+        <span class="text-xs font-bold text-slate-600" id="conteo-compra">0 pendientes</span>
+        <button onclick="limpiarComprados()" class="text-xs text-rose-500 font-bold active:underline">Limpiar tachados</button>
       </div>
 
       <div id="lista-compra" class="space-y-2"></div>
@@ -81,40 +72,36 @@
 
   </main>
 
-  <!-- MODAL / SELECTOR TÁCTIL DE ALIMENTOS PARA EL MENÚ -->
-  <div id="modal-selector" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-end justify-center p-0">
-    <div class="bg-white rounded-t-3xl p-5 w-full max-w-xl max-h-[80vh] flex flex-col gap-4 shadow-2xl animate-in slide-in-from-bottom">
+  <!-- MODAL DE SELECCIÓN DE ALIMENTOS -->
+  <div id="modal-selector" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-end justify-center">
+    <div class="bg-white rounded-t-3xl p-5 w-full max-w-xl max-h-[80vh] flex flex-col gap-3 shadow-2xl">
       <div class="flex justify-between items-center pb-2 border-b border-slate-100">
         <div>
-          <h3 class="font-bold text-slate-800 text-base" id="modal-titulo">Seleccionar alimentos</h3>
-          <p class="text-xs text-slate-400">Toca para añadir al plato</p>
+          <h3 class="font-black text-slate-800 text-base" id="modal-titulo">Seleccionar de la Despensa</h3>
+          <p class="text-xs text-slate-500">Toca para añadir al plato (descuenta 1 unidad)</p>
         </div>
         <button onclick="cerrarModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold flex items-center justify-center">✕</button>
       </div>
       
-      <div id="modal-chips" class="flex flex-wrap gap-2 overflow-y-auto py-2">
-        <!-- Chips interactivos -->
-      </div>
+      <div id="modal-chips" class="flex flex-wrap gap-2 overflow-y-auto py-2"></div>
 
-      <div class="pt-2 border-t border-slate-100 flex gap-2">
-        <button onclick="cerrarModal()" class="w-full bg-blue-600 text-white py-2.5 rounded-xl font-bold text-sm">
-          Listo
-        </button>
-      </div>
+      <button onclick="cerrarModal()" class="w-full bg-slate-800 text-white py-2.5 rounded-xl font-bold text-sm">
+        Cerrar
+      </button>
     </div>
   </div>
 
-  <!-- Barra de Navegación Móvil Fija -->
-  <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 px-6 py-2.5 flex justify-around items-center max-w-xl mx-auto shadow-[0_-4px_12px_rgba(0,0,0,0.05)] z-40">
-    <button onclick="cambiarVista('stock')" id="nav-stock" class="flex flex-col items-center gap-1 text-blue-600 text-xs font-bold transition">
+  <!-- Barra de Navegación Inferior -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-6 py-2.5 flex justify-around items-center max-w-xl mx-auto shadow-lg z-40">
+    <button onclick="cambiarVista('stock')" id="nav-stock" class="flex flex-col items-center gap-1 text-blue-600 text-xs font-black">
       <span class="text-2xl">🧊</span>
       <span>Despensa</span>
     </button>
-    <button onclick="cambiarVista('menu')" id="nav-menu" class="flex flex-col items-center gap-1 text-slate-400 text-xs font-bold transition">
+    <button onclick="cambiarVista('menu')" id="nav-menu" class="flex flex-col items-center gap-1 text-slate-400 text-xs font-black">
       <span class="text-2xl">📅</span>
       <span>15 Días</span>
     </button>
-    <button onclick="cambiarVista('compra')" id="nav-compra" class="flex flex-col items-center gap-1 text-slate-400 text-xs font-bold transition">
+    <button onclick="cambiarVista('compra')" id="nav-compra" class="flex flex-col items-center gap-1 text-slate-400 text-xs font-black">
       <span class="text-2xl">🛒</span>
       <span>Compra</span>
     </button>
@@ -124,28 +111,30 @@
     let alimentos = [];
     let compra = [];
     let menus = {};
-    let modoSuper = false;
-    let fechaObjetivo = null;
-    let momentoObjetivo = null;
+    let diaModal = null;
+    let momentoModal = null;
 
-    // Reconocimiento expandido de iconos
+    // Diccionario robusto y normalizado de iconos
     function detectarIcono(texto) {
-      const t = texto.toLowerCase();
-      if (t.includes('pollo') || t.includes('pavo') || t.includes('alitas')) return '🍗';
-      if (t.includes('carne') || t.includes('ternera') || t.includes('lomo') || t.includes('cerdo') || t.includes('hamburguesa')) return '🥩';
-      if (t.includes('merluza') || t.includes('salmon') || t.includes('pescado') || t.includes('bacalao') || t.includes('atun') || t.includes('lubina')) return '🐟';
+      const t = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      
+      if (t.includes('hamburguesa') || t.includes('burguer')) return '🍔';
+      if (t.includes('pizza')) return '🍕';
+      if (t.includes('pollo') || t.includes('pavo') || t.includes('alitas') || t.includes('nugget')) return '🍗';
+      if (t.includes('carne') || t.includes('ternera') || t.includes('lomo') || t.includes('cerdo') || t.includes('chuleta')) return '🥩';
+      if (t.includes('merluza') || t.includes('salmon') || t.includes('pescado') || t.includes('bacalao') || t.includes('atun') || t.includes('lubina') || t.includes('dorada')) return '🐟';
       if (t.includes('gamba') || t.includes('langostino') || t.includes('pulpo') || t.includes('calamar')) return '🦐';
-      if (t.includes('brocoli') || t.includes('judia') || t.includes('ensalada') || t.includes('lechuga') || t.includes('espinaca') || t.includes('menestra') || t.includes('acelga')) return '🥦';
+      if (t.includes('brocoli') || t.includes('judia') || t.includes('ensalada') || t.includes('lechuga') || t.includes('espinaca') || t.includes('menestra') || t.includes('acelga') || t.includes('verdura')) return '🥦';
       if (t.includes('tomate') || t.includes('gazpacho')) return '🍅';
-      if (t.includes('patata') || t.includes('pure')) return '🥔';
+      if (t.includes('patata') || t.includes('pure') || t.includes('fritas')) return '🥔';
       if (t.includes('huevo') || t.includes('tortilla')) return '🥚';
       if (t.includes('arroz') || t.includes('paella')) return '🍚';
-      if (t.includes('pasta') || t.includes('macarron') || t.includes('espagueti') || t.includes('lasaña')) return '🍝';
+      if (t.includes('pasta') || t.includes('macarron') || t.includes('espagueti') || t.includes('lasana')) return '🍝';
       if (t.includes('lenteja') || t.includes('garbanzo') || t.includes('alubia') || t.includes('potaje')) return '🫘';
       if (t.includes('aceite') || t.includes('sal') || t.includes('especias') || t.includes('ajo') || t.includes('pimienta')) return '🧂';
       if (t.includes('leche') || t.includes('yogur') || t.includes('queso')) return '🧀';
       if (t.includes('pan') || t.includes('tostada')) return '🥖';
-      if (t.includes('fruta') || t.includes('manzana') || t.includes('platano') || t.includes('naranja') || t.includes('pera')) return '🍎';
+      if (t.includes('fruta') || t.includes('manzana') || t.includes('platano') || t.includes('naranja')) return '🍎';
       return '🍽️';
     }
 
@@ -157,8 +146,13 @@
       document.getElementById(`view-${vista}`).classList.remove('hidden');
       document.getElementById(`nav-${vista}`).classList.replace('text-slate-400', 'text-blue-600');
 
-      const titulos = { stock: 'Mi Despensa', menu: 'Menú 15 Días', compra: 'Lista de la Compra' };
-      document.getElementById('view-title').innerText = titulos[vista];
+      const cabeceras = {
+        stock: { t: 'Mi Despensa', i: '🧊' },
+        menu: { t: 'Menú 15 Días', i: '📅' },
+        compra: { t: 'Lista Compra', i: '🛒' }
+      };
+      document.getElementById('view-title').innerText = cabeceras[vista].t;
+      document.getElementById('header-icon').innerText = cabeceras[vista].i;
     }
 
     async function cargarTodo() {
@@ -176,33 +170,38 @@
         renderizarDias();
         renderizarCompra();
       } catch (err) {
-        console.error("Error al cargar:", err);
+        console.error(err);
       }
     }
 
-    // VISTA DESPENSA
+    // DESPENSA
     function renderizarStock() {
       const cont = document.getElementById('lista-alimentos');
       if (alimentos.length === 0) {
-        cont.innerHTML = '<div class="col-span-2 text-center py-10 text-slate-400 text-sm">No hay alimentos guardados. Añade el primero arriba.</div>';
+        cont.innerHTML = '<div class="col-span-2 text-center py-10 text-slate-400 text-sm">Despensa vacía. Añade alimentos arriba.</div>';
         return;
       }
       cont.innerHTML = alimentos.map(item => `
-        <div class="bg-white p-3 rounded-2xl border border-slate-200 flex flex-col justify-between gap-2.5 shadow-sm transition ${item.en_stock ? '' : 'opacity-40 bg-slate-50'}">
-          <div class="flex items-start justify-between gap-1">
+        <div class="bg-white p-3 rounded-2xl border border-slate-200 flex flex-col justify-between shadow-sm ${item.unidades > 0 ? '' : 'opacity-40 bg-slate-50'}">
+          <div class="flex items-start justify-between">
             <div class="flex items-center gap-2">
               <span class="text-2xl">${item.icono}</span>
-              <span class="font-bold text-sm leading-tight text-slate-800">${item.nombre}</span>
+              <span class="font-black text-sm leading-tight text-slate-800">${item.nombre}</span>
             </div>
             <button onclick="borrarAlimento('${item.id}')" class="text-slate-300 hover:text-rose-500 text-xs p-1">✕</button>
           </div>
-          <div class="flex gap-1.5 mt-1">
-            <button onclick="toggleStock('${item.id}', ${item.en_stock ? 0 : 1})" 
-                    class="flex-1 py-1.5 text-xs rounded-xl font-bold border active:scale-95 transition ${item.en_stock ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}">
-              ${item.en_stock ? 'En Stock' : 'Agotado'}
-            </button>
-            <button onclick="mandarACompra('${item.nombre}', '${item.icono}')" title="Añadir a la lista de compra"
-                    class="px-3 py-1.5 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-xl font-bold active:scale-95 hover:bg-amber-100 transition">
+
+          <div class="flex items-center justify-between mt-3 pt-2 border-t border-slate-100">
+            <!-- Botones - y + para unidades -->
+            <div class="flex items-center bg-slate-100 rounded-xl p-1 gap-2">
+              <button onclick="modificarUnidades('${item.id}', -1)" class="w-6 h-6 bg-white rounded-lg font-bold shadow-xs text-slate-700 active:scale-90">-</button>
+              <span class="font-black text-xs text-slate-800 w-4 text-center">${item.unidades || 0}</span>
+              <button onclick="modificarUnidades('${item.id}', 1)" class="w-6 h-6 bg-white rounded-lg font-bold shadow-xs text-slate-700 active:scale-90">+</button>
+            </div>
+
+            <!-- Botón mandar a la compra -->
+            <button onclick="mandarACompra('${item.nombre}', '${item.icono}')" title="Añadir a la lista" 
+                    class="px-2.5 py-1.5 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-xl font-bold active:scale-95">
               🛒
             </button>
           </div>
@@ -210,7 +209,16 @@
       `).join('');
     }
 
-    // VISTA 15 DÍAS
+    async function modificarUnidades(id, delta) {
+      await fetch('/api/alimentos', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, delta })
+      });
+      cargarTodo();
+    }
+
+    // PLANIFICADOR (15 DÍAS)
     function renderizarDias() {
       const cont = document.getElementById('contenedor-dias');
       const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -223,46 +231,44 @@
         const fechaStr = f.toISOString().split('T')[0];
         const diaNombre = i === 0 ? 'Hoy' : (i === 1 ? 'Mañana' : `${diasSemana[f.getDay()]} ${f.getDate()}`);
 
-        const comida = menus[`${fechaStr}_comida`] || { descripcion: '', consumido: false };
-        const cena = menus[`${fechaStr}_cena`] || { descripcion: '', consumido: false };
+        const comida = menus[`${fechaStr}_comida`] || { items: [] };
+        const cena = menus[`${fechaStr}_cena`] || { items: [] };
 
         html += `
-          <div class="bg-white rounded-2xl p-3.5 border border-slate-200 shadow-sm space-y-2.5">
-            <div class="flex justify-between items-center border-b border-slate-100 pb-1.5">
+          <div class="bg-white rounded-2xl p-3 border border-slate-200 shadow-sm space-y-2">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-1">
               <span class="font-black text-sm ${i === 0 ? 'text-blue-600' : 'text-slate-800'}">${diaNombre}</span>
-              <span class="text-[10px] uppercase font-bold text-slate-400">${fechaStr}</span>
+              <span class="text-[10px] font-bold text-slate-400">${fechaStr}</span>
             </div>
 
-            <!-- Fila Comida -->
-            <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-100 ${comida.consumido ? 'opacity-50' : ''}">
-              <button onclick="toggleConsumido('${fechaStr}', 'comida', ${!comida.consumido})" 
-                      class="w-6 h-6 rounded-lg flex items-center justify-center border text-xs font-bold ${comida.consumido ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-slate-300 border-slate-300'}">
-                ✓
-              </button>
-              <span class="text-xs font-bold text-amber-700 w-12">Comida:</span>
-              <input type="text" value="${comida.descripcion}" 
-                     id="input-${fechaStr}-comida"
-                     onblur="guardarMenuTexto('${fechaStr}', 'comida', this.value)" 
-                     placeholder="¿Qué comemos?" class="bg-transparent text-sm flex-1 outline-none font-medium text-slate-700">
-              <button onclick="abrirSelector('${fechaStr}', 'comida')" class="text-blue-600 text-xs font-bold px-2 py-1 bg-blue-50 rounded-lg active:scale-95">
-                + Alimento
-              </button>
+            <!-- Comida -->
+            <div class="bg-amber-50/50 p-2 rounded-xl border border-amber-100/60 flex items-center justify-between gap-2">
+              <span class="text-xs font-bold text-amber-800 w-12 shrink-0">Comida</span>
+              <div class="flex flex-wrap gap-1 flex-1 items-center">
+                ${comida.items.length === 0 ? '<span class="text-xs text-slate-400 italic">Sin asignar</span>' : ''}
+                ${comida.items.map((item, idx) => `
+                  <span class="inline-flex items-center gap-1 bg-white border border-amber-200 px-2 py-0.5 rounded-lg text-xs font-bold text-slate-700">
+                    ${item.icono} ${item.nombre}
+                    <button onclick="quitarItemMenu('${fechaStr}', 'comida', ${idx}, '${item.id}')" class="text-slate-300 hover:text-rose-500 ml-1">✕</button>
+                  </span>
+                `).join('')}
+              </div>
+              <button onclick="abrirSelector('${fechaStr}', 'comida')" class="px-2 py-1 bg-amber-600 text-white rounded-lg text-xs font-bold active:scale-95 shrink-0">+ Elegir</button>
             </div>
 
-            <!-- Fila Cena -->
-            <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-100 ${cena.consumido ? 'opacity-50' : ''}">
-              <button onclick="toggleConsumido('${fechaStr}', 'cena', ${!cena.consumido})" 
-                      class="w-6 h-6 rounded-lg flex items-center justify-center border text-xs font-bold ${cena.consumido ? 'bg-indigo-500 text-white border-indigo-500' : 'bg-white text-slate-300 border-slate-300'}">
-                ✓
-              </button>
-              <span class="text-xs font-bold text-indigo-700 w-12">Cena:</span>
-              <input type="text" value="${cena.descripcion}" 
-                     id="input-${fechaStr}-cena"
-                     onblur="guardarMenuTexto('${fechaStr}', 'cena', this.value)" 
-                     placeholder="¿Qué cenamos?" class="bg-transparent text-sm flex-1 outline-none font-medium text-slate-700">
-              <button onclick="abrirSelector('${fechaStr}', 'cena')" class="text-indigo-600 text-xs font-bold px-2 py-1 bg-indigo-50 rounded-lg active:scale-95">
-                + Alimento
-              </button>
+            <!-- Cena -->
+            <div class="bg-indigo-50/50 p-2 rounded-xl border border-indigo-100/60 flex items-center justify-between gap-2">
+              <span class="text-xs font-bold text-indigo-800 w-12 shrink-0">Cena</span>
+              <div class="flex flex-wrap gap-1 flex-1 items-center">
+                ${cena.items.length === 0 ? '<span class="text-xs text-slate-400 italic">Sin asignar</span>' : ''}
+                ${cena.items.map((item, idx) => `
+                  <span class="inline-flex items-center gap-1 bg-white border border-indigo-200 px-2 py-0.5 rounded-lg text-xs font-bold text-slate-700">
+                    ${item.icono} ${item.nombre}
+                    <button onclick="quitarItemMenu('${fechaStr}', 'cena', ${idx}, '${item.id}')" class="text-slate-300 hover:text-rose-500 ml-1">✕</button>
+                  </span>
+                `).join('')}
+              </div>
+              <button onclick="abrirSelector('${fechaStr}', 'cena')" class="px-2 py-1 bg-indigo-600 text-white rounded-lg text-xs font-bold active:scale-95 shrink-0">+ Elegir</button>
             </div>
           </div>
         `;
@@ -270,23 +276,24 @@
       cont.innerHTML = html;
     }
 
-    // SELECTOR TÁCTIL
+    // MODAL SELECTOR Y DESCUENTO
     function abrirSelector(fecha, momento) {
-      fechaObjetivo = fecha;
-      momentoObjetivo = momento;
+      diaModal = fecha;
+      momentoModal = momento;
       const modal = document.getElementById('modal-selector');
       const contChips = document.getElementById('modal-chips');
-      document.getElementById('modal-titulo').innerText = `Añadir a ${momento.toUpperCase()} (${fecha})`;
+      document.getElementById('modal-titulo').innerText = `${momento.toUpperCase()}: ${fecha}`;
 
-      const disponibles = alimentos.filter(a => a.en_stock);
-      if (disponibles.length === 0) {
-        contChips.innerHTML = '<div class="text-slate-400 text-sm py-4">No tienes alimentos en stock. Marca algunos en la Despensa.</div>';
+      const conStock = alimentos.filter(a => a.unidades > 0);
+      if (conStock.length === 0) {
+        contChips.innerHTML = '<div class="text-slate-400 text-sm py-4 text-center col-span-2">No quedan alimentos con stock en la despensa.</div>';
       } else {
-        contChips.innerHTML = disponibles.map(a => `
-          <button onclick="insertarEnPlato('${a.nombre}', '${a.icono}')" 
-                  class="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-blue-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 active:scale-95 transition">
-            <span>${a.icono}</span>
+        contChips.innerHTML = conStock.map(a => `
+          <button onclick="asignarAlimentoAMenu('${a.id}', '${a.nombre}', '${a.icono}')" 
+                  class="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 active:scale-95">
+            <span class="text-base">${a.icono}</span>
             <span>${a.nombre}</span>
+            <span class="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-md text-[10px] font-black">${a.unidades}</span>
           </button>
         `).join('');
       }
@@ -295,99 +302,115 @@
 
     function cerrarModal() {
       document.getElementById('modal-selector').classList.add('hidden');
-      fechaObjetivo = null;
-      momentoObjetivo = null;
+      diaModal = null;
+      momentoModal = null;
     }
 
-    function insertarEnPlato(nombre, icono) {
-      const input = document.getElementById(`input-${fechaObjetivo}-${momentoObjetivo}`);
-      if (input) {
-        const actual = input.value.trim();
-        input.value = actual ? `${actual} + ${nombre}` : nombre;
-        guardarMenuTexto(fechaObjetivo, momentoObjetivo, input.value);
-      }
-    }
-
-    async function toggleConsumido(fecha, momento, consumido) {
-      const actual = menus[`${fecha}_${momento}`] || { descripcion: '' };
-      menus[`${fecha}_${momento}`] = { descripcion: actual.descripcion, consumido };
+    async function asignarAlimentoAMenu(id, nombre, icono) {
+      const clave = `${diaModal}_${momentoModal}`;
+      const actual = menus[clave] || { items: [] };
       
+      // Añadir al menú
+      actual.items.push({ id, nombre, icono });
+      menus[clave] = actual;
+
+      // Descontar 1 unidad en la base de datos
+      await fetch('/api/alimentos', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, delta: -1 })
+      });
+
+      // Guardar el menú
       await fetch('/api/menu', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fecha, momento, descripcion: actual.descripcion, consumido })
+        body: JSON.stringify({ fecha: diaModal, momento: momentoModal, items: actual.items })
       });
 
-      // Si se marca como consumido y tiene texto, ofrecer reponer
-      if (consumido && actual.descripcion.trim()) {
-        if (confirm(`¿Quieres añadir "${actual.descripcion}" a la Lista de la Compra para reponer?`)) {
-          await mandarACompra(actual.descripcion, '🍽️');
+      // Si las unidades de ese alimento acaban de llegar a 0, sugerir lista de la compra
+      const itemAlimento = alimentos.find(a => a.id === id);
+      if (itemAlimento && itemAlimento.unidades - 1 <= 0) {
+        if (confirm(`Has gastado la última unidad de "${nombre}". ¿Quieres añadirlo a la lista de la compra?`)) {
+          await mandarACompra(nombre, icono);
         }
       }
-      renderizarDias();
+
+      await cargarTodo();
+      abrirSelector(diaModal, momentoModal); // Refrescar chips del modal con stock actualizado
     }
 
-    // VISTA COMPRA
+    async function quitarItemMenu(fecha, momento, index, idAlimento) {
+      const clave = `${fecha}_${momento}`;
+      const actual = menus[clave];
+      if (!actual) return;
+
+      actual.items.splice(index, 1);
+
+      // Devolver 1 unidad a la despensa
+      if (idAlimento) {
+        await fetch('/api/alimentos', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: idAlimento, delta: 1 })
+        });
+      }
+
+      // Guardar cambios del menú
+      await fetch('/api/menu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fecha, momento, items: actual.items })
+      });
+
+      cargarTodo();
+    }
+
+    // LISTA DE LA COMPRA
     function renderizarCompra() {
       const cont = document.getElementById('lista-compra');
       const pendientes = compra.filter(c => !c.comprado);
       document.getElementById('conteo-compra').innerText = `${pendientes.length} pendientes`;
 
-      let itemsAMostrar = modoSuper ? pendientes : compra;
-
-      if (itemsAMostrar.length === 0) {
-        cont.innerHTML = '<div class="text-center py-12 text-slate-400 text-sm">No hay nada en la lista.</div>';
+      if (compra.length === 0) {
+        cont.innerHTML = '<div class="text-center py-12 text-slate-400 text-sm">Lista vacía.</div>';
         return;
       }
 
-      cont.innerHTML = itemsAMostrar.map(item => `
+      cont.innerHTML = compra.map(item => `
         <div class="bg-white p-3 rounded-2xl border border-slate-200 flex justify-between items-center shadow-sm">
           <label class="flex items-center gap-3 flex-1 cursor-pointer">
             <input type="checkbox" ${item.comprado ? 'checked' : ''} onchange="toggleCompra('${item.id}', this.checked)"
                    class="w-5 h-5 text-blue-600 rounded-lg border-slate-300 focus:ring-blue-500 cursor-pointer">
             <span class="text-xl">${item.icono}</span>
-            <span class="text-sm font-semibold ${item.comprado ? 'line-through text-slate-400' : 'text-slate-800'}">${item.item}</span>
+            <span class="text-sm font-bold ${item.comprado ? 'line-through text-slate-400' : 'text-slate-800'}">${item.item}</span>
           </label>
-          <button onclick="borrarCompra('${item.id}')" class="text-slate-300 hover:text-rose-500 text-sm p-1.5">✕</button>
+          <button onclick="borrarCompra('${item.id}')" class="text-slate-300 hover:text-rose-500 text-sm p-1">✕</button>
         </div>
       `).join('');
     }
 
-    function toggleModoSuper() {
-      modoSuper = !modoSuper;
-      const btn = document.getElementById('btn-super');
-      btn.innerText = `Modo Súper: ${modoSuper ? 'ON (Ocultar listos)' : 'Off'}`;
-      btn.classList.toggle('bg-blue-600', modoSuper);
-      btn.classList.toggle('text-white', modoSuper);
-      renderizarCompra();
-    }
-
-    // MÉTODOS API
+    // ACCIONES API REST
     async function agregarAlimento() {
-      const input = document.getElementById('input-alimento');
-      const nombre = input.value.trim();
+      const inputNom = document.getElementById('input-alimento');
+      const inputUni = document.getElementById('input-unidades');
+      const nombre = inputNom.value.trim();
+      const unidades = parseInt(inputUni.value) || 1;
       if (!nombre) return;
+      
       const icono = detectarIcono(nombre);
       await fetch('/api/alimentos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, icono })
+        body: JSON.stringify({ nombre, icono, unidades })
       });
-      input.value = '';
-      cargarTodo();
-    }
-
-    async function toggleStock(id, en_stock) {
-      await fetch('/api/alimentos', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, en_stock })
-      });
+      inputNom.value = '';
+      inputUni.value = '2';
       cargarTodo();
     }
 
     async function borrarAlimento(id) {
-      if (!confirm('¿Eliminar este alimento de la despensa?')) return;
+      if (!confirm('¿Eliminar alimento de la despensa?')) return;
       await fetch('/api/alimentos', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
@@ -441,16 +464,6 @@
     async function limpiarComprados() {
       await fetch('/api/compra-limpiar', { method: 'POST' });
       cargarTodo();
-    }
-
-    async function guardarMenuTexto(fecha, momento, descripcion) {
-      const actual = menus[`${fecha}_${momento}`] || { consumido: false };
-      menus[`${fecha}_${momento}`] = { descripcion, consumido: actual.consumido };
-      await fetch('/api/menu', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fecha, momento, descripcion, consumido: actual.consumido })
-      });
     }
 
     cargarTodo();
