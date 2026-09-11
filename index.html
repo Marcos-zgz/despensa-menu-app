@@ -65,7 +65,7 @@
       <div id="lista-alimentos" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5"></div>
     </section>
 
-    <!-- VISTA 2: MENÚ 15 DÍAS REVERSIBLE -->
+    <!-- VISTA 2: MENÚ 15 DÍAS -->
     <section id="view-menu" class="hidden space-y-3">
       <div class="flex justify-between items-center px-1">
         <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">Planificación 15 Días</span>
@@ -101,7 +101,7 @@
       <div class="flex justify-between items-center pb-2 border-b border-slate-100">
         <div>
           <h3 class="font-black text-slate-900 text-base" id="modal-titulo">Seleccionar Alimento</h3>
-          <p class="text-xs text-slate-400">Toca para añadir al menú</p>
+          <p class="text-xs text-slate-400">Toca para incluir en el menú</p>
         </div>
         <button onclick="cerrarModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold flex items-center justify-center">✕</button>
       </div>
@@ -114,7 +114,7 @@
     </div>
   </div>
 
-  <!-- BARRA DE NAVEGACIÓN CON ICONOS -->
+  <!-- BARRA DE NAVEGACIÓN -->
   <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 px-6 py-2 pb-safe flex justify-around items-center w-full max-w-4xl mx-auto shadow-lg z-40">
     <button onclick="cambiarVista('stock')" id="nav-stock" class="flex flex-col items-center gap-0.5 text-blue-600 text-xs font-black p-1 transition">
       <span class="text-2xl">🧊</span>
@@ -141,7 +141,7 @@
       const toast = document.getElementById('toast-aviso');
       toast.innerText = texto;
       toast.classList.remove('opacity-0');
-      setTimeout(() => toast.classList.add('opacity-0'), 1500);
+      setTimeout(() => toast.classList.add('opacity-0'), 2000);
     }
 
     function cambiarVista(vista) {
@@ -175,7 +175,7 @@
       }
     }
 
-    // 1. VISTA DESPENSA
+    // DESPENSA
     function renderizarStock() {
       const cont = document.getElementById('lista-alimentos');
       if (!alimentos || alimentos.length === 0) {
@@ -242,7 +242,7 @@
       cargarTodo();
     }
 
-    // 2. VISTA 15 DÍAS
+    // MENÚ 15 DÍAS
     function renderizarDias() {
       const cont = document.getElementById('contenedor-dias');
       const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -417,7 +417,7 @@
       await cargarTodo();
     }
 
-    // 3. VISTA COMPRA
+    // COMPRA
     function renderizarCompra() {
       const cont = document.getElementById('lista-compra');
       const pendientes = compra.filter(c => !c.comprado);
@@ -489,7 +489,7 @@
       cargarTodo();
     }
 
- // 4. DICTADO POR VOZ ROBUSTO
+    // DICTADO SEGURO
     const numerosTexto = {
       'un': 1, 'uno': 1, 'una': 1,
       'dos': 2, 'tres': 3, 'cuatro': 4,
@@ -501,11 +501,10 @@
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       
       if (!SpeechRecognition) {
-        avisar('Micro no soportado');
+        alert('Este navegador no soporta dictado por voz.');
         return;
       }
 
-      // Crear instancia limpia en cada pulsación para evitar bloqueos
       const rec = new SpeechRecognition();
       rec.lang = 'es-ES';
       rec.continuous = false;
@@ -523,16 +522,15 @@
       };
 
       rec.onerror = (e) => {
-        console.error("Error dictado:", e);
         btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse');
         if (e.error === 'not-allowed') {
-          avisar('Permiso micro denegado');
+          alert('Permiso de micrófono denegado. Actívalo en los ajustes del navegador.');
         } else {
-          avisar('No se captó audio');
+          avisar('Error captando voz: ' + e.error);
         }
       };
 
-      rec.onresult = async (evento) => {
+      rec.onresult = (evento) => {
         const transcripcion = evento.results[0][0].transcript.trim().toLowerCase();
         const palabras = transcripcion.split(' ');
         let unidadesDetectadas = null;
@@ -555,20 +553,15 @@
         const textoFinal = palabras.join(' ');
         inputNom.value = textoFinal.charAt(0).toUpperCase() + textoFinal.slice(1);
         
-        avisar('Reconocido y guardando...');
-        
-        // Guarda directamente en la base de datos sin obligarte a tocar otro botón
-        await agregarAlimento();
+        avisar('Reconocido. Pulsa + Añadir');
       };
 
       try {
         rec.start();
       } catch (err) {
-        console.error(err);
         btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse');
+        alert('No se pudo iniciar el micro: ' + err.message);
       }
-    }
-      reconocimiento.start();
     }
 
     cargarTodo();
