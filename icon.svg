@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Fondo degradado elegante -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <!-- Sombra sutil para el isotipo -->
+    <filter id="dropShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Base cuadrada con esquinas redondeadas tipo iOS/Android -->
+  <rect width="512" height="512" rx="115" fill="url(#bgGrad)"/>
+
+  <!-- Isotipo Central (Campana de cocina + Líneas de lista/menú) -->
+  <g filter="url(#dropShadow)" stroke="#ffffff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    
+    <!-- Pomo de la campana -->
+    <circle cx="256" cy="140" r="16" fill="#38bdf8" stroke="#38bdf8" stroke-width="6"/>
+
+    <!-- Campana gourmet (Cloche) -->
+    <path d="M128 270 C128 175, 384 175, 384 270 Z" fill="rgba(255, 255, 255, 0.06)"/>
+
+    <!-- Bandeja base -->
+    <line x1="100" y1="270" x2="412" y2="270" stroke="#38bdf8"/>
+
+    <!-- Bloque inferior: Menú organizado / Lista -->
+    <rect x="156" y="315" width="200" height="90" rx="16" fill="rgba(255, 255, 255, 0.04)" stroke-width="16"/>
+    
+    <!-- Líneas de lista de la compra / planificación -->
+    <line x1="195" y1="345" x2="317" y2="345" stroke-width="14" stroke="#94a3b8"/>
+    <line x1="195" y1="375" x2="275" y2="375" stroke-width="14" stroke="#38bdf8"/>
+    
+    <!-- Detalle de verificación rápida (check) -->
+    <path d="M305 372 l10 10 l18 -18" stroke="#38bdf8" stroke-width="10" stroke-linecap="round"/>
+  </g>
+</svg>
