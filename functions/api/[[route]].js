@@ -1,11 +1,11 @@
-// Manejador central de la base de datos D1 para Cloudflare Pages
+// Backend API con soporte para PWA, borrado y gestión de platos
 export async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
   const path = url.pathname.replace('/api/', '');
   const method = request.method;
 
-  const db = env.DB; // Binding a Cloudflare D1
+  const db = env.DB;
 
   try {
     // 1. ENDPOINTS DE ALIMENTOS
@@ -27,6 +27,12 @@ export async function onRequest(context) {
           .bind(body.en_stock, body.id).run();
         return Response.json({ success: true });
       }
+      if (method === 'DELETE') {
+        const body = await request.json();
+        await db.prepare("DELETE FROM alimentos WHERE id = ?")
+          .bind(body.id).run();
+        return Response.json({ success: true });
+      }
     }
 
     // 2. ENDPOINTS DE MENÚS (15 DÍAS)
@@ -35,18 +41,24 @@ export async function onRequest(context) {
         const { results } = await db.prepare("SELECT * FROM menu_dias").all();
         const mapa = {};
         results.forEach(r => {
-          mapa[`${r.fecha}_${r.momento}`] = r.descripcion;
+          mapa[`${r.fecha}_${r.momento}`] = {
+            descripcion: r.descripcion || '',
+            consumido: r.alimentos_usados === 'consumido'
+          };
         });
         return Response.json(mapa);
       }
       if (method === 'POST') {
         const body = await request.json();
         const id = crypto.randomUUID();
+        const estado = body.consumido ? 'consumido' : '[]';
         await db.prepare(`
-          INSERT INTO menu_dias (id, fecha, momento, descripcion)
-          VALUES (?, ?, ?, ?)
-          ON CONFLICT(fecha, momento) DO UPDATE SET descripcion=excluded.descripcion
-        `).bind(id, body.fecha, body.momento, body.descripcion).run();
+          INSERT INTO menu_dias (id, fecha, momento, descripcion, alimentos_usados)
+          VALUES (?, ?, ?, ?, ?)
+          ON CONFLICT(fecha, momento) DO UPDATE SET 
+            descripcion = excluded.descripcion,
+            alimentos_usados = excluded.alimentos_usados
+        `).bind(id, body.fecha, body.momento, body.descripcion, estado).run();
         return Response.json({ success: true });
       }
     }
