@@ -16,8 +16,8 @@ export async function onRequest(context) {
         const body = await request.json();
         const id = crypto.randomUUID();
         const unidades = parseInt(body.unidades) || 1;
-        await db.prepare("INSERT INTO alimentos (id, nombre, icono, unidades, en_stock) VALUES (?, ?, ?, ?, ?)")
-          .bind(id, body.nombre, body.icono || '🍽️', unidades, unidades > 0 ? 1 : 0).run();
+        await db.prepare("INSERT INTO alimentos (id, nombre, icono, unidades, en_stock) VALUES (?, ?, '', ?, ?)")
+          .bind(id, body.nombre, unidades, unidades > 0 ? 1 : 0).run();
         return Response.json({ success: true, id });
       }
       if (method === 'PATCH') {
@@ -38,7 +38,7 @@ export async function onRequest(context) {
       }
     }
 
-    // 2. MENÚS (Guardado fiable)
+    // 2. MENÚS
     if (path === 'menu') {
       if (method === 'GET') {
         const { results } = await db.prepare("SELECT * FROM menu_dias").all();
@@ -81,8 +81,8 @@ export async function onRequest(context) {
       if (method === 'POST') {
         const body = await request.json();
         const id = crypto.randomUUID();
-        await db.prepare("INSERT INTO lista_compra (id, item, icono, comprado) VALUES (?, ?, ?, 0)")
-          .bind(id, body.item, body.icono || '🛒').run();
+        await db.prepare("INSERT INTO lista_compra (id, item, icono, comprado) VALUES (?, ?, '', 0)")
+          .bind(id, body.item).run();
         return Response.json({ success: true, id });
       }
       if (method === 'PATCH') {
