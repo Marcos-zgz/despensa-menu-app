@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Despensa y Menús</title>
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#2563eb">
+  <meta name="theme-color" content="#0f172a">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1rem); }
@@ -13,7 +13,7 @@
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen pb-28 select-none antialiased">
 
-  <!-- Header minimalista sin iconos -->
+  <!-- Header -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-30 px-4 py-3 shadow-xs">
     <div class="max-w-4xl mx-auto flex justify-between items-center">
       <h1 class="text-base sm:text-lg font-black tracking-tight text-slate-900 uppercase" id="view-title">
@@ -27,13 +27,20 @@
 
   <main class="w-full max-w-4xl mx-auto p-3 sm:p-5">
     
-    <!-- VISTA 1: DESPENSA (TEXTO PURO Y CONTROL RÁPIDO) -->
+    <!-- VISTA 1: DESPENSA CON DICTADO -->
     <section id="view-stock" class="space-y-4">
-      
-      <!-- Entrada rápida -->
       <div class="bg-white p-3 sm:p-4 rounded-2xl shadow-xs border border-slate-200 flex flex-col sm:flex-row gap-2">
-        <input id="input-alimento" type="text" placeholder="Añadir alimento (ej. Hamburguesas, Salmón...)" 
-               class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-600 outline-none">
+        <div class="flex-1 flex gap-2">
+          <input id="input-alimento" type="text" placeholder="Ej: Hamburguesas, Salmón... o usa el micro" 
+                 class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-600 outline-none">
+          
+          <button type="button" id="btn-micro" onclick="activarDictado()" title="Dictar por voz"
+                  class="w-11 h-11 bg-slate-100 hover:bg-slate-200 active:scale-90 text-slate-700 rounded-xl flex items-center justify-center font-bold transition shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 02-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            </svg>
+          </button>
+        </div>
         
         <div class="flex gap-2">
           <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2 shrink-0">
@@ -49,11 +56,10 @@
         </div>
       </div>
 
-      <!-- Cuadrícula limpia -->
       <div id="lista-alimentos" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5"></div>
     </section>
 
-    <!-- VISTA 2: MENÚ 15 DÍAS (REVERSIBLE SIN CONFIRMACIONES) -->
+    <!-- VISTA 2: MENÚ 15 DÍAS REVERSIBLE -->
     <section id="view-menu" class="hidden space-y-3">
       <div class="flex justify-between items-center px-1">
         <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">Planificación 15 Días</span>
@@ -62,10 +68,10 @@
       <div id="contenedor-dias" class="space-y-3"></div>
     </section>
 
-    <!-- VISTA 3: LISTA DE LA COMPRA -->
+    <!-- VISTA 3: COMPRA -->
     <section id="view-compra" class="hidden space-y-3">
       <div class="bg-white p-3 rounded-2xl shadow-xs border border-slate-200 flex gap-2">
-        <input id="input-compra" type="text" placeholder="Añadir artículo (ej. Sal, Aceite, Café...)" 
+        <input id="input-compra" type="text" placeholder="Añadir extra: Sal, Aceite, Café..." 
                class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none">
         <button onclick="agregarItemCompra()" 
                 class="bg-slate-900 active:scale-95 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-xs">
@@ -83,13 +89,13 @@
 
   </main>
 
-  <!-- MODAL SELECTOR MINIMALISTA -->
+  <!-- MODAL SELECTOR -->
   <div id="modal-selector" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden flex items-end justify-center">
     <div class="bg-white rounded-t-3xl p-4 sm:p-6 w-full max-w-2xl max-h-[85vh] flex flex-col gap-3 shadow-2xl">
       <div class="flex justify-between items-center pb-2 border-b border-slate-100">
         <div>
           <h3 class="font-black text-slate-900 text-base" id="modal-titulo">Seleccionar Alimento</h3>
-          <p class="text-xs text-slate-400">Toca para incluir en el menú</p>
+          <p class="text-xs text-slate-400">Toca para añadir al menú</p>
         </div>
         <button onclick="cerrarModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold flex items-center justify-center">✕</button>
       </div>
@@ -102,16 +108,19 @@
     </div>
   </div>
 
-  <!-- Barra de Navegación Inferior (Texto elegante) -->
-  <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 px-6 py-2.5 pb-safe flex justify-around items-center w-full max-w-4xl mx-auto shadow-lg z-40">
-    <button onclick="cambiarVista('stock')" id="nav-stock" class="flex flex-col items-center gap-1 text-blue-600 text-xs font-black p-1">
-      <span class="text-sm uppercase tracking-wider">Despensa</span>
+  <!-- BARRA DE NAVEGACIÓN CON ICONOS -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 px-6 py-2 pb-safe flex justify-around items-center w-full max-w-4xl mx-auto shadow-lg z-40">
+    <button onclick="cambiarVista('stock')" id="nav-stock" class="flex flex-col items-center gap-0.5 text-blue-600 text-xs font-black p-1 transition">
+      <span class="text-2xl">🧊</span>
+      <span class="text-[11px] tracking-tight">Despensa</span>
     </button>
-    <button onclick="cambiarVista('menu')" id="nav-menu" class="flex flex-col items-center gap-1 text-slate-400 text-xs font-black p-1">
-      <span class="text-sm uppercase tracking-wider">15 Días</span>
+    <button onclick="cambiarVista('menu')" id="nav-menu" class="flex flex-col items-center gap-0.5 text-slate-400 text-xs font-black p-1 transition">
+      <span class="text-2xl">📅</span>
+      <span class="text-[11px] tracking-tight">15 Días</span>
     </button>
-    <button onclick="cambiarVista('compra')" id="nav-compra" class="flex flex-col items-center gap-1 text-slate-400 text-xs font-black p-1">
-      <span class="text-sm uppercase tracking-wider">Compra</span>
+    <button onclick="cambiarVista('compra')" id="nav-compra" class="flex flex-col items-center gap-0.5 text-slate-400 text-xs font-black p-1 transition">
+      <span class="text-2xl">🛒</span>
+      <span class="text-[11px] tracking-tight">Compra</span>
     </button>
   </nav>
 
@@ -164,7 +173,7 @@
     function renderizarStock() {
       const cont = document.getElementById('lista-alimentos');
       if (!alimentos || alimentos.length === 0) {
-        cont.innerHTML = '<div class="col-span-full text-center py-10 text-slate-400 text-sm">No hay alimentos. Añade el primero arriba.</div>';
+        cont.innerHTML = '<div class="col-span-full text-center py-10 text-slate-400 text-sm">No hay alimentos. Añade el primero arriba o usa el micro.</div>';
         return;
       }
       cont.innerHTML = alimentos.map(item => `
@@ -210,7 +219,7 @@
       await fetch('/api/alimentos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, icono: '', unidades })
+        body: JSON.stringify({ nombre, unidades })
       });
       inputNom.value = '';
       avisar('Guardado');
@@ -227,7 +236,7 @@
       cargarTodo();
     }
 
-    // 2. VISTA 15 DÍAS (REVERSIBLE SIN CONFIRMACIÓN)
+    // 2. VISTA 15 DÍAS
     function renderizarDias() {
       const cont = document.getElementById('contenedor-dias');
       const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -261,7 +270,7 @@
                       ${comida.consumido ? '✓ Cocinada' : 'Marcar cocinada'}
                     </button>
                   ` : ''}
-                  <button onclick="abrirSelector('${fechaStr}', 'comida')" class="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 active:scale-95">
+                  <button onclick="abrirSelector('${fechaStr}', 'comida')" class="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 active:scale-95">
                     + Añadir
                   </button>
                 </div>
@@ -288,7 +297,7 @@
                       ${cena.consumido ? '✓ Cocinada' : 'Marcar cocinada'}
                     </button>
                   ` : ''}
-                  <button onclick="abrirSelector('${fechaStr}', 'cena')" class="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 active:scale-95">
+                  <button onclick="abrirSelector('${fechaStr}', 'cena')" class="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 active:scale-95">
                     + Añadir
                   </button>
                 </div>
@@ -366,16 +375,14 @@
       renderizarDias();
     }
 
-    // ACCIÓN REVERSIBLE SIN POPUPS
     async function toggleConsumoDirecto(fecha, momento) {
       const clave = `${fecha}_${momento}`;
       const plato = menus[clave];
       if (!plato || plato.items.length === 0) return;
 
       const nuevoEstado = !plato.consumido;
-      const delta = nuevoEstado ? -1 : 1; // Si cocinas resta 1; si desmarcas devuelve 1
+      const delta = nuevoEstado ? -1 : 1;
 
-      // Ajustar inventario en la base de datos
       for (const it of plato.items) {
         if (it.id) {
           await fetch('/api/alimentos', {
@@ -384,7 +391,6 @@
             body: JSON.stringify({ id: it.id, delta })
           });
 
-          // Si se cocinó y quedó a 0 existencias, mandar automáticamente a la compra sin popup
           if (nuevoEstado) {
             const alimentoLocal = alimentos.find(a => a.id === it.id);
             if (alimentoLocal && (alimentoLocal.unidades + delta) <= 0) {
@@ -432,7 +438,7 @@
       await fetch('/api/compra', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ item, icono: '' })
+        body: JSON.stringify({ item })
       });
       avisar(`Añadido a la compra`);
       cargarTodo();
@@ -445,7 +451,7 @@
       await fetch('/api/compra', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ item, icono: '' })
+        body: JSON.stringify({ item })
       });
       input.value = '';
       avisar('Añadido a lista');
@@ -475,6 +481,70 @@
       await fetch('/api/compra-limpiar', { method: 'POST' });
       avisar('Lista limpiada');
       cargarTodo();
+    }
+
+    // 4. DICTADO POR VOZ
+    let reconocimiento = null;
+    const numerosTexto = {
+      'un': 1, 'uno': 1, 'una': 1,
+      'dos': 2, 'tres': 3, 'cuatro': 4,
+      'cinco': 5, 'seis': 6, 'siete': 7,
+      'ocho': 8, 'nueve': 9, 'diez': 10
+    };
+
+    function activarDictado() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      
+      if (!SpeechRecognition) {
+        avisar('Voz no soportada');
+        return;
+      }
+
+      if (!reconocimiento) {
+        reconocimiento = new SpeechRecognition();
+        reconocimiento.lang = 'es-ES';
+        reconocimiento.continuous = false;
+        reconocimiento.interimResults = false;
+
+        reconocimiento.onstart = () => {
+          const btn = document.getElementById('btn-micro');
+          btn.classList.add('bg-rose-500', 'text-white', 'animate-pulse');
+          avisar('Escuchando...');
+        };
+
+        reconocimiento.onend = () => {
+          const btn = document.getElementById('btn-micro');
+          btn.classList.remove('bg-rose-500', 'text-white', 'animate-pulse');
+        };
+
+        reconocimiento.onerror = (e) => {
+          avisar('No se captó audio');
+        };
+
+        reconocimiento.onresult = (evento) => {
+          let transcripcion = evento.results[0][0].transcript.trim().toLowerCase();
+          const palabras = transcripcion.split(' ');
+          let unidadesDetectadas = null;
+
+          if (numerosTexto[palabras[0]]) {
+            unidadesDetectadas = numerosTexto[palabras[0]];
+            palabras.shift();
+          } else if (!isNaN(parseInt(palabras[0]))) {
+            unidadesDetectadas = parseInt(palabras[0]);
+            palabras.shift();
+          }
+
+          if (unidadesDetectadas) {
+            document.getElementById('input-unidades').value = unidadesDetectadas;
+          }
+
+          const textoFinal = palabras.join(' ');
+          document.getElementById('input-alimento').value = textoFinal.charAt(0).toUpperCase() + textoFinal.slice(1);
+          avisar('Texto reconocido');
+        };
+      }
+
+      reconocimiento.start();
     }
 
     cargarTodo();
