@@ -10,20 +10,19 @@ export async function onRequest(context) {
     if (path === 'alimentos') {
       if (method === 'GET') {
         const { results } = await db.prepare("SELECT * FROM alimentos ORDER BY created_at DESC").all();
-        return Response.json(results);
+        return Response.json(results || []);
       }
       if (method === 'POST') {
         const body = await request.json();
         const id = crypto.randomUUID();
         const unidades = parseInt(body.unidades) || 1;
         await db.prepare("INSERT INTO alimentos (id, nombre, icono, unidades, en_stock) VALUES (?, ?, ?, ?, ?)")
-          .bind(id, body.nombre, body.icono, unidades, unidades > 0 ? 1 : 0).run();
+          .bind(id, body.nombre, body.icono || '🍽️', unidades, unidades > 0 ? 1 : 0).run();
         return Response.json({ success: true, id });
       }
       if (method === 'PATCH') {
         const body = await request.json();
         if (body.delta !== undefined) {
-          // Sumar o restar unidades
           await db.prepare("UPDATE alimentos SET unidades = MAX(0, unidades + ?), en_stock = CASE WHEN (unidades + ?) > 0 THEN 1 ELSE 0 END WHERE id = ?")
             .bind(body.delta, body.delta, body.id).run();
         } else {
@@ -39,15 +38,18 @@ export async function onRequest(context) {
       }
     }
 
-    // 2. MENÚS
+    // 2. MENÚS (Guardado fiable)
     if (path === 'menu') {
       if (method === 'GET') {
         const { results } = await db.prepare("SELECT * FROM menu_dias").all();
         const mapa = {};
-        results.forEach(r => {
+        (results || []).forEach(r => {
+          let items = [];
+          try { items = JSON.parse(r.alimentos_usados || '[]'); } catch(e) { items = []; }
           mapa[`${r.fecha}_${r.momento}`] = {
             descripcion: r.descripcion || '',
-            items: JSON.parse(r.alimentos_usados || '[]')
+            items: items,
+            consumido: r.descripcion === 'CONSUMIDO'
           };
         });
         return Response.json(mapa);
@@ -56,13 +58,16 @@ export async function onRequest(context) {
         const body = await request.json();
         const id = crypto.randomUUID();
         const itemsJson = JSON.stringify(body.items || []);
+        const flagConsumido = body.consumido ? 'CONSUMIDO' : '';
+        
         await db.prepare(`
           INSERT INTO menu_dias (id, fecha, momento, descripcion, alimentos_usados)
           VALUES (?, ?, ?, ?, ?)
           ON CONFLICT(fecha, momento) DO UPDATE SET 
             descripcion = excluded.descripcion,
             alimentos_usados = excluded.alimentos_usados
-        `).bind(id, body.fecha, body.momento, body.descripcion, itemsJson).run();
+        `).bind(id, body.fecha, body.momento, flagConsumido, itemsJson).run();
+        
         return Response.json({ success: true });
       }
     }
@@ -71,13 +76,13 @@ export async function onRequest(context) {
     if (path === 'compra') {
       if (method === 'GET') {
         const { results } = await db.prepare("SELECT * FROM lista_compra ORDER BY comprado ASC, created_at DESC").all();
-        return Response.json(results);
+        return Response.json(results || []);
       }
       if (method === 'POST') {
         const body = await request.json();
         const id = crypto.randomUUID();
         await db.prepare("INSERT INTO lista_compra (id, item, icono, comprado) VALUES (?, ?, ?, 0)")
-          .bind(id, body.item, body.icono).run();
+          .bind(id, body.item, body.icono || '🛒').run();
         return Response.json({ success: true, id });
       }
       if (method === 'PATCH') {
