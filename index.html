@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Despensa y Menús</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen pb-24">
+
+  <!-- Cabecera -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 px-4 py-3 shadow-sm">
+    <div class="max-w-xl mx-auto flex justify-between items-center">
+      <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+        <span>🍲</span> <span id="view-title">Mi Despensa</span>
+      </h1>
+      <span class="text-xs font-semibold px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full">Sincronizado</span>
+    </div>
+  </header>
+
+  <main class="max-w-xl mx-auto p-4">
+    
+    <!-- VISTA 1: DESPENSA / CONGELADOR -->
+    <section id="view-stock" class="space-y-4">
+      <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 flex gap-2">
+        <input id="input-alimento" type="text" placeholder="Ej: Pechugas de pollo, Brócoli..." 
+               class="flex-1 bg-slate-100 border-0 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+        <button onclick="agregarAlimento()" 
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">
+          + Añadir
+        </button>
+      </div>
+
+      <div id="lista-alimentos" class="grid grid-cols-2 gap-2">
+        <!-- Tarjetas dinámicas aquí -->
+        <div class="text-center col-span-2 py-8 text-slate-400 text-sm">Cargando alimentos...</div>
+      </div>
+    </section>
+
+    <!-- VISTA 2: PLANIFICADOR 15 DÍAS -->
+    <section id="view-menu" class="hidden space-y-4">
+      <div class="text-xs text-slate-500 font-medium px-1">Próximos 15 días:</div>
+      <div id="contenedor-dias" class="space-y-3">
+        <!-- Bloques de días dinámicos -->
+      </div>
+    </section>
+
+    <!-- VISTA 3: LISTA DE LA COMPRA -->
+    <section id="view-compra" class="hidden space-y-4">
+      <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 flex gap-2">
+        <input id="input-compra" type="text" placeholder="Añadir extra: Aceite, Sal, Ajo..." 
+               class="flex-1 bg-slate-100 border-0 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+        <button onclick="agregarItemCompra()" 
+                class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">
+          + Añadir
+        </button>
+      </div>
+
+      <div class="flex justify-between items-center px-1">
+        <span class="text-xs text-slate-400 font-medium" id="conteo-compra">0 pendientes</span>
+        <button onclick="limpiarComprados()" class="text-xs text-rose-500 hover:underline">Borrar marcados</button>
+      </div>
+
+      <div id="lista-compra" class="space-y-2">
+        <!-- Items de compra dinámicos -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Barra de Navegación Móvil (Inferior) -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-6 py-2 flex justify-around items-center max-w-xl mx-auto shadow-lg z-40">
+    <button onclick="cambiarVista('stock')" id="nav-stock" class="flex flex-col items-center gap-1 text-blue-600 text-xs font-semibold">
+      <span class="text-xl">🧊</span>
+      <span>Despensa</span>
+    </button>
+    <button onclick="cambiarVista('menu')" id="nav-menu" class="flex flex-col items-center gap-1 text-slate-400 text-xs font-semibold">
+      <span class="text-xl">📅</span>
+      <span>15 Días</span>
+    </button>
+    <button onclick="cambiarVista('compra')" id="nav-compra" class="flex flex-col items-center gap-1 text-slate-400 text-xs font-semibold">
+      <span class="text-xl">🛒</span>
+      <span>Compra</span>
+    </button>
+  </nav>
+
+  <!-- Script con Lógica y Conexión a la API -->
+  <script>
+    let alimentos = [];
+    let compra = [];
+    let menus = {};
+
+    // Detección automática de emoji/icono por texto
+    function detectarIcono(texto) {
+      const t = texto.toLowerCase();
+      if (t.includes('pollo') || t.includes('pavo') || t.includes('alitas')) return '🍗';
+      if (t.includes('carne') || t.includes('ternera') || t.includes('lomo') || t.includes('cerdo')) return '🥩';
+      if (t.includes('merluza') || t.includes('salmon') || t.includes('pescado') || t.includes('bacalao') || t.includes('atun')) return '🐟';
+      if (t.includes('brocoli') || t.includes('judia') || t.includes('verdura') || t.includes('ensalada') || t.includes('lechuga') || t.includes('espinaca')) return '🥦';
+      if (t.includes('huevo') || t.includes('tortilla')) return '🥚';
+      if (t.includes('arroz') || t.includes('pasta') || t.includes('macarron') || t.includes('espagueti')) return '🍚';
+      if (t.includes('lenteja') || t.includes('garbanzo') || t.includes('alubia')) return '🫘';
+      if (t.includes('aceite') || t.includes('sal') || t.includes('especias') || t.includes('ajo')) return '🧂';
+      if (t.includes('leche') || t.includes('yogur') || t.includes('queso')) return '🧀';
+      if (t.includes('fruta') || t.includes('manzana') || t.includes('platano') || t.includes('naranja')) return '🍎';
+      return '🍽️';
+    }
+
+    // Navegación de pestañas
+    function cambiarVista(vista) {
+      ['stock', 'menu', 'compra'].forEach(v => {
+        document.getElementById(`view-${v}`).classList.add('hidden');
+        document.getElementById(`nav-${v}`).classList.replace('text-blue-600', 'text-slate-400');
+      });
+      document.getElementById(`view-${vista}`).classList.remove('hidden');
+      document.getElementById(`nav-${vista}`).classList.replace('text-slate-400', 'text-blue-600');
+
+      const titulos = { stock: 'Mi Despensa', menu: 'Menú Próximos 15 Días', compra: 'Lista de la Compra' };
+      document.getElementById('view-title').innerText = titulos[vista];
+    }
+
+    // Cargar datos al inicio
+    async function cargarTodo() {
+      try {
+        const resStock = await fetch('/api/alimentos');
+        alimentos = await resStock.json();
+        renderizarStock();
+
+        const resCompra = await fetch('/api/compra');
+        compra = await resCompra.json();
+        renderizarCompra();
+
+        const resMenu = await fetch('/api/menu');
+        menus = await resMenu.json();
+        renderizarDias();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Renderizar Alimentos
+    function renderizarStock() {
+      const cont = document.getElementById('lista-alimentos');
+      if (alimentos.length === 0) {
+        cont.innerHTML = '<div class="col-span-2 text-center py-6 text-slate-400 text-sm">No tienes alimentos guardados. Añade el primero arriba.</div>';
+        return;
+      }
+      cont.innerHTML = alimentos.map(item => `
+        <div class="bg-white p-3 rounded-xl border border-slate-200 flex flex-col justify-between gap-2 shadow-sm ${item.en_stock ? '' : 'opacity-50'}">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">${item.icono}</span>
+            <span class="font-semibold text-sm leading-tight">${item.nombre}</span>
+          </div>
+          <div class="flex gap-1 mt-1">
+            <button onclick="toggleStock('${item.id}', ${item.en_stock ? 0 : 1})" 
+                    class="flex-1 py-1 text-xs rounded-lg font-medium border ${item.en_stock ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-300'}">
+              ${item.en_stock ? 'En Stock' : 'Agotado'}
+            </button>
+            <button onclick="mandarACompra('${item.nombre}', '${item.icono}')" title="Añadir a la compra" 
+                    class="px-2 py-1 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100">
+              🛒
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Renderizar 15 días continuos
+    function renderizarDias() {
+      const cont = document.getElementById('contenedor-dias');
+      const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      let html = '';
+
+      const hoy = new Date();
+      for (let i = 0; i < 15; i++) {
+        const f = new Date();
+        f.setDate(hoy.getDate() + i);
+        const fechaStr = f.toISOString().split('T')[0];
+        const diaNombre = i === 0 ? 'Hoy' : (i === 1 ? 'Mañana' : diasSemana[f.getDay()]);
+        const diaNum = f.getDate();
+
+        const comidaVal = menus[`${fechaStr}_comida`] || '';
+        const cenaVal = menus[`${fechaStr}_cena`] || '';
+
+        html += `
+          <div class="bg-white rounded-2xl p-3 border border-slate-200 shadow-sm space-y-2">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-1">
+              <span class="font-bold text-sm text-slate-700">${diaNombre} <span class="text-slate-400 font-normal text-xs">${diaNum}</span></span>
+            </div>
+            <div class="grid grid-cols-1 gap-2">
+              <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-xl">
+                <span class="text-xs font-bold text-amber-600 w-14">Comida:</span>
+                <input type="text" value="${comidaVal}" onblur="guardarMenu('${fechaStr}', 'comida', this.value)" 
+                       placeholder="¿Qué comemos?" class="bg-transparent text-sm flex-1 outline-none">
+              </div>
+              <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-xl">
+                <span class="text-xs font-bold text-indigo-600 w-14">Cena:</span>
+                <input type="text" value="${cenaVal}" onblur="guardarMenu('${fechaStr}', 'cena', this.value)" 
+                       placeholder="¿Qué cenamos?" class="bg-transparent text-sm flex-1 outline-none">
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      cont.innerHTML = html;
+    }
+
+    // Renderizar Lista de la compra
+    function renderizarCompra() {
+      const cont = document.getElementById('lista-compra');
+      document.getElementById('conteo-compra').innerText = `${compra.filter(c => !c.comprado).length} pendientes`;
+      if (compra.length === 0) {
+        cont.innerHTML = '<div class="text-center py-6 text-slate-400 text-sm">La lista de la compra está vacía.</div>';
+        return;
+      }
+      cont.innerHTML = compra.map(item => `
+        <div class="bg-white p-3 rounded-xl border border-slate-200 flex justify-between items-center shadow-sm">
+          <div class="flex items-center gap-3">
+            <input type="checkbox" ${item.comprado ? 'checked' : ''} onchange="toggleCompra('${item.id}', this.checked)"
+                   class="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer">
+            <span class="text-lg">${item.icono}</span>
+            <span class="text-sm font-medium ${item.comprado ? 'line-through text-slate-400' : 'text-slate-800'}">${item.item}</span>
+          </div>
+          <button onclick="borrarCompra('${item.id}')" class="text-slate-300 hover:text-rose-500 text-xs px-2">✕</button>
+        </div>
+      `).join('');
+    }
+
+    // Acciones API
+    async function agregarAlimento() {
+      const input = document.getElementById('input-alimento');
+      const nombre = input.value.trim();
+      if (!nombre) return;
+      const icono = detectarIcono(nombre);
+      await fetch('/api/alimentos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, icono })
+      });
+      input.value = '';
+      cargarTodo();
+    }
+
+    async function toggleStock(id, en_stock) {
+      await fetch('/api/alimentos', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, en_stock })
+      });
+      cargarTodo();
+    }
+
+    async function mandarACompra(item, icono) {
+      await fetch('/api/compra', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ item, icono })
+      });
+      cargarTodo();
+      cambiarVista('compra');
+    }
+
+    async function agregarItemCompra() {
+      const input = document.getElementById('input-compra');
+      const item = input.value.trim();
+      if (!item) return;
+      const icono = detectarIcono(item);
+      await fetch('/api/compra', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ item, icono })
+      });
+      input.value = '';
+      cargarTodo();
+    }
+
+    async function toggleCompra(id, comprado) {
+      await fetch('/api/compra', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, comprado: comprado ? 1 : 0 })
+      });
+      cargarTodo();
+    }
+
+    async function borrarCompra(id) {
+      await fetch('/api/compra', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      cargarTodo();
+    }
+
+    async function limpiarComprados() {
+      await fetch('/api/compra-limpiar', { method: 'POST' });
+      cargarTodo();
+    }
+
+    async function guardarMenu(fecha, momento, descripcion) {
+      menus[`${fecha}_${momento}`] = descripcion;
+      await fetch('/api/menu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fecha, momento, descripcion })
+      });
+    }
+
+    cargarTodo();
+  </script>
+</body>
+</html>
