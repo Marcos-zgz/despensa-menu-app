@@ -6,7 +6,7 @@ export async function onRequest(context) {
   const db = env.DB;
 
   try {
-    // 1. ALIMENTOS
+    // 1. ALIMENTOS (CON SUMA AUTOMÁTICA SI YA EXISTE)
     if (path === 'alimentos') {
       if (method === 'GET') {
         const { results } = await db.prepare("SELECT * FROM alimentos ORDER BY created_at DESC").all();
@@ -14,11 +14,25 @@ export async function onRequest(context) {
       }
       if (method === 'POST') {
         const body = await request.json();
-        const id = crypto.randomUUID();
-        const unidades = parseInt(body.unidades) || 1;
-        await db.prepare("INSERT INTO alimentos (id, nombre, icono, unidades, en_stock) VALUES (?, ?, '', ?, ?)")
-          .bind(id, body.nombre, unidades, unidades > 0 ? 1 : 0).run();
-        return Response.json({ success: true, id });
+        const nombreLimpio = (body.nombre || '').trim();
+        const unidadesSumar = parseInt(body.unidades) || 1;
+
+        // Comprobar si ya existe (sin importar mayúsculas/minúsculas)
+        const existente = await db.prepare("SELECT * FROM alimentos WHERE LOWER(TRIM(nombre)) = LOWER(?)")
+          .bind(nombreLimpio).first();
+
+        if (existente) {
+          // Si existe, se suman las unidades y se asegura que esté en stock
+          await db.prepare("UPDATE alimentos SET unidades = unidades + ?, en_stock = 1 WHERE id = ?")
+            .bind(unidadesSumar, existente.id).run();
+          return Response.json({ success: true, updated: true, id: existente.id });
+        } else {
+          // Si no existe, se inserta
+          const id = crypto.randomUUID();
+          await db.prepare("INSERT INTO alimentos (id, nombre, icono, unidades, en_stock) VALUES (?, ?, '', ?, ?)")
+            .bind(id, nombreLimpio, unidadesSumar, unidadesSumar > 0 ? 1 : 0).run();
+          return Response.json({ success: true, created: true, id });
+        }
       }
       if (method === 'PATCH') {
         const body = await request.json();
@@ -72,7 +86,7 @@ export async function onRequest(context) {
       }
     }
 
-    // 3. COMPRA
+    // 3. LISTA DE LA COMPRA
     if (path === 'compra') {
       if (method === 'GET') {
         const { results } = await db.prepare("SELECT * FROM lista_compra ORDER BY comprado ASC, created_at DESC").all();
@@ -82,7 +96,7 @@ export async function onRequest(context) {
         const body = await request.json();
         const id = crypto.randomUUID();
         await db.prepare("INSERT INTO lista_compra (id, item, icono, comprado) VALUES (?, ?, '', 0)")
-          .bind(id, body.item).run();
+          .bind(id, (body.item || '').trim()).run();
         return Response.json({ success: true, id });
       }
       if (method === 'PATCH') {
