@@ -489,8 +489,7 @@
       cargarTodo();
     }
 
-    // 4. DICTADO POR VOZ
-    let reconocimiento = null;
+ // 4. DICTADO POR VOZ ROBUSTO
     const numerosTexto = {
       'un': 1, 'uno': 1, 'una': 1,
       'dos': 2, 'tres': 3, 'cuatro': 4,
@@ -502,54 +501,73 @@
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       
       if (!SpeechRecognition) {
-        avisar('Voz no soportada');
+        avisar('Micro no soportado');
         return;
       }
 
-      if (!reconocimiento) {
-        reconocimiento = new SpeechRecognition();
-        reconocimiento.lang = 'es-ES';
-        reconocimiento.continuous = false;
-        reconocimiento.interimResults = false;
+      // Crear instancia limpia en cada pulsación para evitar bloqueos
+      const rec = new SpeechRecognition();
+      rec.lang = 'es-ES';
+      rec.continuous = false;
+      rec.interimResults = false;
 
-        reconocimiento.onstart = () => {
-          const btn = document.getElementById('btn-micro');
-          btn.classList.add('bg-rose-500', 'text-white', 'animate-pulse');
-          avisar('Escuchando...');
-        };
+      const btn = document.getElementById('btn-micro');
 
-        reconocimiento.onend = () => {
-          const btn = document.getElementById('btn-micro');
-          btn.classList.remove('bg-rose-500', 'text-white', 'animate-pulse');
-        };
+      rec.onstart = () => {
+        btn.classList.add('bg-rose-600', 'text-white', 'animate-pulse');
+        avisar('Escuchando...');
+      };
 
-        reconocimiento.onerror = (e) => {
+      rec.onend = () => {
+        btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse');
+      };
+
+      rec.onerror = (e) => {
+        console.error("Error dictado:", e);
+        btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse');
+        if (e.error === 'not-allowed') {
+          avisar('Permiso micro denegado');
+        } else {
           avisar('No se captó audio');
-        };
+        }
+      };
 
-        reconocimiento.onresult = (evento) => {
-          let transcripcion = evento.results[0][0].transcript.trim().toLowerCase();
-          const palabras = transcripcion.split(' ');
-          let unidadesDetectadas = null;
+      rec.onresult = async (evento) => {
+        const transcripcion = evento.results[0][0].transcript.trim().toLowerCase();
+        const palabras = transcripcion.split(' ');
+        let unidadesDetectadas = null;
 
-          if (numerosTexto[palabras[0]]) {
-            unidadesDetectadas = numerosTexto[palabras[0]];
-            palabras.shift();
-          } else if (!isNaN(parseInt(palabras[0]))) {
-            unidadesDetectadas = parseInt(palabras[0]);
-            palabras.shift();
-          }
+        if (numerosTexto[palabras[0]]) {
+          unidadesDetectadas = numerosTexto[palabras[0]];
+          palabras.shift();
+        } else if (!isNaN(parseInt(palabras[0]))) {
+          unidadesDetectadas = parseInt(palabras[0]);
+          palabras.shift();
+        }
 
-          if (unidadesDetectadas) {
-            document.getElementById('input-unidades').value = unidadesDetectadas;
-          }
+        const inputUni = document.getElementById('input-unidades');
+        const inputNom = document.getElementById('input-alimento');
 
-          const textoFinal = palabras.join(' ');
-          document.getElementById('input-alimento').value = textoFinal.charAt(0).toUpperCase() + textoFinal.slice(1);
-          avisar('Texto reconocido');
-        };
+        if (unidadesDetectadas) {
+          inputUni.value = unidadesDetectadas;
+        }
+
+        const textoFinal = palabras.join(' ');
+        inputNom.value = textoFinal.charAt(0).toUpperCase() + textoFinal.slice(1);
+        
+        avisar('Reconocido y guardando...');
+        
+        // Guarda directamente en la base de datos sin obligarte a tocar otro botón
+        await agregarAlimento();
+      };
+
+      try {
+        rec.start();
+      } catch (err) {
+        console.error(err);
+        btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse');
       }
-
+    }
       reconocimiento.start();
     }
 
