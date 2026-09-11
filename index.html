@@ -153,6 +153,39 @@
       setTimeout(() => toast.classList.add('opacity-0'), 2000);
     }
 
+    function normalizar(texto) {
+      return (texto || '')
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quita tildes
+        .trim();
+    }
+
+    // Encuentra un alimento en la despensa de forma flexible (coincidencia parcial de palabras)
+    function buscarAlimentoFlexible(nombreBuscado) {
+      const limpio = normalizar(nombreBuscado);
+      if (!limpio) return null;
+
+      // 1. Coincidencia exacta
+      let match = alimentos.find(a => normalizar(a.nombre) === limpio);
+      if (match) return match;
+
+      // 2. Si uno contiene al otro (ej: "pollo" dentro de "pechugas de pollo" o al revés)
+      match = alimentos.find(a => {
+        const nomDespensa = normalizar(a.nombre);
+        return nomDespensa.includes(limpio) || limpio.includes(nomDespensa);
+      });
+      if (match) return match;
+
+      // 3. Coincidencia por palabras clave sueltas
+      const palabras = limpio.split(' ').filter(p => p.length > 2);
+      for (const p of palabras) {
+        match = alimentos.find(a => normalizar(a.nombre).includes(p));
+        if (match) return match;
+      }
+
+      return null;
+    }
+
     function cambiarVista(vista) {
       ['stock', 'menu', 'compra'].forEach(v => {
         document.getElementById(`view-${v}`).classList.add('hidden');
@@ -184,7 +217,7 @@
       }
     }
 
-    // 1. VISTA DESPENSA
+    // 1. DESPENSA
     function renderizarStock() {
       const cont = document.getElementById('lista-alimentos');
       if (!alimentos || alimentos.length === 0) {
@@ -251,7 +284,7 @@
       await cargarTodo();
     }
 
-    // 2. VISTA 15 DÍAS
+    // 2. MENÚ 15 DÍAS
     function renderizarDias() {
       const cont = document.getElementById('contenedor-dias');
       const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -402,7 +435,7 @@
       renderizarDias();
     }
 
-    // ACCIÓN DE CONSUMIR CON DESCUENTO SEGURO Y PASO A LA COMPRA
+    // ACCIÓN DE CONSUMIR (Con búsqueda flexible y pase automático a la compra en el servidor)
     async function toggleConsumoDirecto(fecha, momento) {
       const clave = `${fecha}_${momento}`;
       const plato = menus[clave];
@@ -411,34 +444,22 @@
       const nuevoEstado = !plato.consumido;
       const delta = nuevoEstado ? -1 : 1;
 
-      // Procesar cada alimento del plato
       for (const it of plato.items) {
-        // Localizar el alimento en la despensa: por ID o por coincidencia de nombre
         let alimento = null;
         if (it.id) {
           alimento = alimentos.find(a => a.id === it.id);
         }
         if (!alimento && it.nombre) {
-          const nomLimpio = it.nombre.trim().toLowerCase();
-          alimento = alimentos.find(a => a.nombre.trim().toLowerCase() === nomLimpio);
+          alimento = buscarAlimentoFlexible(it.nombre);
         }
 
         if (alimento) {
-          // Descontar o devolver unidad en la despensa
+          // El backend se encarga de restar y, si queda a 0, meterlo en lista_compra
           await fetch('/api/alimentos', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id: alimento.id, delta })
           });
-
-          // Si se cocina y las existencias llegan a 0 (o menos), mandar directo a la compra
-          if (nuevoEstado && (alimento.unidades + delta) <= 0) {
-            await fetch('/api/compra', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ item: alimento.nombre })
-            });
-          }
         }
       }
 
@@ -525,7 +546,7 @@
       await cargarTodo();
     }
 
-    // 4. MOTOR UNIFICADO DE VOZ CON LIMPIEZA DE "DE", "DEL", ETC.
+    // 4. DICTADO POR VOZ
     const numerosTexto = {
       'un': 1, 'uno': 1, 'una': 1,
       'dos': 2, 'tres': 3, 'cuatro': 4,
@@ -534,7 +555,6 @@
     };
 
     function limpiarPrefijos(texto) {
-      // Elimina palabras de enlace como "de", "del", "de la", "de los" al inicio del alimento
       return texto.replace(/^(de\s+la\s+|de\s+los\s+|de\s+las\s+|del\s+|de\s+)/i, '').trim();
     }
 
@@ -575,7 +595,6 @@
         let texto = evento.results[0][0].transcript.trim();
         if (!texto) return;
 
-        // CASO A: DESPENSA (Extrae unidades y limpia conectores como "de")
         if (destino === 'stock') {
           const palabras = texto.toLowerCase().split(' ');
           let unidadesDetectadas = null;
@@ -592,20 +611,24 @@
             document.getElementById('input-unidades').value = unidadesDetectadas;
           }
 
-          // Unir el resto y quitar "de", "del", etc.
           let textoLimpio = limpiarPrefijos(palabras.join(' '));
           document.getElementById('input-alimento').value = textoLimpio.charAt(0).toUpperCase() + textoLimpio.slice(1);
           await agregarAlimento();
         }
 
-        // CASO B: MENÚ (Añade el plato al día)
         else if (destino === 'menu') {
           const clave = `${fechaExtra}_${momentoExtra}`;
           if (!menus[clave]) menus[clave] = { items: [], consumido: false };
           
           let platoTexto = limpiarPrefijos(texto);
           platoTexto = platoTexto.charAt(0).toUpperCase() + platoTexto.slice(1);
-          menus[clave].items.push({ id: null, nombre: platoTexto });
+
+          // Si coincide con algo de la despensa de forma flexible, se asocia su id
+          const coincidente = buscarAlimentoFlexible(platoTexto);
+          menus[clave].items.push({ 
+            id: coincidente ? coincidente.id : null, 
+            nombre: platoTexto 
+          });
 
           await fetch('/api/menu', {
             method: 'POST',
@@ -617,7 +640,6 @@
           renderizarDias();
         }
 
-        // CASO C: COMPRA (Añade a la lista)
         else if (destino === 'compra') {
           let articulo = limpiarPrefijos(texto);
           articulo = articulo.charAt(0).toUpperCase() + articulo.slice(1);
@@ -632,7 +654,6 @@
       }
     }
 
-    // REGISTRO DEL SERVICE WORKER
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW fallo:', err));
     }
