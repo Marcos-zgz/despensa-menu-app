@@ -33,14 +33,14 @@
 
   <main class="w-full max-w-4xl mx-auto p-3 sm:p-5">
     
-    <!-- VISTA 1: DESPENSA CON DICTADO -->
+    <!-- VISTA 1: DESPENSA -->
     <section id="view-stock" class="space-y-4">
       <div class="bg-white p-3 sm:p-4 rounded-2xl shadow-xs border border-slate-200 flex flex-col sm:flex-row gap-2">
         <div class="flex-1 flex gap-2">
-          <input id="input-alimento" type="text" placeholder="Ej: Hamburguesas, Salmón... o usa el micro" 
+          <input id="input-alimento" type="text" placeholder="Ej: Hamburguesas, Salmón..." 
                  class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-600 outline-none">
           
-          <button type="button" id="btn-micro" onclick="activarDictado()" title="Dictar por voz"
+          <button type="button" id="btn-micro-stock" onclick="iniciarVoz('stock', 'btn-micro-stock')" title="Dictar por voz"
                   class="w-11 h-11 bg-slate-100 hover:bg-slate-200 active:scale-90 text-slate-700 rounded-xl flex items-center justify-center font-bold transition shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 02-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
@@ -65,20 +65,28 @@
       <div id="lista-alimentos" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5"></div>
     </section>
 
-    <!-- VISTA 2: MENÚ 15 DÍAS -->
+    <!-- VISTA 2: MENÚ 15 DÍAS CON MICRO -->
     <section id="view-menu" class="hidden space-y-3">
       <div class="flex justify-between items-center px-1">
         <span class="text-xs text-slate-500 font-bold uppercase tracking-wider">Planificación 15 Días</span>
-        <span class="text-xs text-slate-400">Pulsa para alternar Cocinada / Pendiente</span>
+        <span class="text-xs text-slate-400">Dicta o selecciona alimentos</span>
       </div>
       <div id="contenedor-dias" class="space-y-3"></div>
     </section>
 
-    <!-- VISTA 3: COMPRA -->
+    <!-- VISTA 3: COMPRA CON MICRO -->
     <section id="view-compra" class="hidden space-y-3">
       <div class="bg-white p-3 rounded-2xl shadow-xs border border-slate-200 flex gap-2">
         <input id="input-compra" type="text" placeholder="Añadir extra: Sal, Aceite, Café..." 
                class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none">
+        
+        <button type="button" id="btn-micro-compra" onclick="iniciarVoz('compra', 'btn-micro-compra')" title="Dictar artículo"
+                class="w-11 h-11 bg-slate-100 hover:bg-slate-200 active:scale-90 text-slate-700 rounded-xl flex items-center justify-center font-bold transition shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 02-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+          </svg>
+        </button>
+
         <button onclick="agregarItemCompra()" 
                 class="bg-slate-900 active:scale-95 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-xs">
           + Añadir
@@ -175,11 +183,11 @@
       }
     }
 
-    // DESPENSA
+    // 1. DESPENSA
     function renderizarStock() {
       const cont = document.getElementById('lista-alimentos');
       if (!alimentos || alimentos.length === 0) {
-        cont.innerHTML = '<div class="col-span-full text-center py-10 text-slate-400 text-sm">No hay alimentos. Añade el primero arriba o usa el micro.</div>';
+        cont.innerHTML = '<div class="col-span-full text-center py-10 text-slate-400 text-sm">No hay alimentos guardados.</div>';
         return;
       }
       cont.innerHTML = alimentos.map(item => `
@@ -242,7 +250,7 @@
       cargarTodo();
     }
 
-    // MENÚ 15 DÍAS
+    // 2. MENÚ 15 DÍAS
     function renderizarDias() {
       const cont = document.getElementById('contenedor-dias');
       const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -276,8 +284,14 @@
                       ${comida.consumido ? '✓ Cocinada' : 'Marcar cocinada'}
                     </button>
                   ` : ''}
+                  
+                  <button id="btn-v-${fechaStr}-comida" onclick="iniciarVoz('menu', 'btn-v-${fechaStr}-comida', '${fechaStr}', 'comida')" title="Dictar comida"
+                          class="w-7 h-7 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-600 active:scale-90">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 02-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+                  </button>
+
                   <button onclick="abrirSelector('${fechaStr}', 'comida')" class="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 active:scale-95">
-                    + Añadir
+                    + Lista
                   </button>
                 </div>
               </div>
@@ -303,8 +317,14 @@
                       ${cena.consumido ? '✓ Cocinada' : 'Marcar cocinada'}
                     </button>
                   ` : ''}
+
+                  <button id="btn-v-${fechaStr}-cena" onclick="iniciarVoz('menu', 'btn-v-${fechaStr}-cena', '${fechaStr}', 'cena')" title="Dictar cena"
+                          class="w-7 h-7 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-600 active:scale-90">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 02-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+                  </button>
+
                   <button onclick="abrirSelector('${fechaStr}', 'cena')" class="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 active:scale-95">
-                    + Añadir
+                    + Lista
                   </button>
                 </div>
               </div>
@@ -413,11 +433,11 @@
         body: JSON.stringify({ fecha, momento, items: plato.items, consumido: nuevoEstado })
       });
 
-      avisar(nuevoEstado ? 'Menú cocinado (Stock -1)' : 'Desmarcado (Stock devuelto)');
+      avisar(nuevoEstado ? 'Cocinada (Stock -1)' : 'Desmarcada (Stock devuelto)');
       await cargarTodo();
     }
 
-    // COMPRA
+    // 3. COMPRA
     function renderizarCompra() {
       const cont = document.getElementById('lista-compra');
       const pendientes = compra.filter(c => !c.comprado);
@@ -479,7 +499,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id })
       });
-      avisar('Eliminado de lista');
+      avisar('Eliminado');
       cargarTodo();
     }
 
@@ -489,7 +509,7 @@
       cargarTodo();
     }
 
-    // DICTADO SEGURO
+    // 4. MOTOR UNIFICADO DE VOZ PARA TODA LA APP
     const numerosTexto = {
       'un': 1, 'uno': 1, 'una': 1,
       'dos': 2, 'tres': 3, 'cuatro': 4,
@@ -497,11 +517,11 @@
       'ocho': 8, 'nueve': 9, 'diez': 10
     };
 
-    function activarDictado() {
+    function iniciarVoz(destino, btnId, fechaExtra, momentoExtra) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       
       if (!SpeechRecognition) {
-        alert('Este navegador no soporta dictado por voz.');
+        alert('Tu navegador no soporta reconocimiento por voz.');
         return;
       }
 
@@ -510,57 +530,81 @@
       rec.continuous = false;
       rec.interimResults = false;
 
-      const btn = document.getElementById('btn-micro');
+      const btn = document.getElementById(btnId);
 
       rec.onstart = () => {
-        btn.classList.add('bg-rose-600', 'text-white', 'animate-pulse');
+        if (btn) btn.classList.add('bg-rose-600', 'text-white', 'animate-pulse');
         avisar('Escuchando...');
       };
 
       rec.onend = () => {
-        btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse');
+        if (btn) btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse');
       };
 
       rec.onerror = (e) => {
-        btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse');
+        if (btn) btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse');
         if (e.error === 'not-allowed') {
-          alert('Permiso de micrófono denegado. Actívalo en los ajustes del navegador.');
+          alert('Permiso de micrófono denegado en el navegador.');
         } else {
-          avisar('Error captando voz: ' + e.error);
+          avisar('Error captando audio');
         }
       };
 
-      rec.onresult = (evento) => {
-        const transcripcion = evento.results[0][0].transcript.trim().toLowerCase();
-        const palabras = transcripcion.split(' ');
-        let unidadesDetectadas = null;
+      rec.onresult = async (evento) => {
+        const texto = evento.results[0][0].transcript.trim();
+        if (!texto) return;
 
-        if (numerosTexto[palabras[0]]) {
-          unidadesDetectadas = numerosTexto[palabras[0]];
-          palabras.shift();
-        } else if (!isNaN(parseInt(palabras[0]))) {
-          unidadesDetectadas = parseInt(palabras[0]);
-          palabras.shift();
+        // CASO A: DICTADO EN DESPENSA (Extrae unidades si se dicen)
+        if (destino === 'stock') {
+          const palabras = texto.toLowerCase().split(' ');
+          let unidadesDetectadas = null;
+
+          if (numerosTexto[palabras[0]]) {
+            unidadesDetectadas = numerosTexto[palabras[0]];
+            palabras.shift();
+          } else if (!isNaN(parseInt(palabras[0]))) {
+            unidadesDetectadas = parseInt(palabras[0]);
+            palabras.shift();
+          }
+
+          if (unidadesDetectadas) {
+            document.getElementById('input-unidades').value = unidadesDetectadas;
+          }
+
+          const textoFinal = palabras.join(' ');
+          document.getElementById('input-alimento').value = textoFinal.charAt(0).toUpperCase() + textoFinal.slice(1);
+          await agregarAlimento();
         }
 
-        const inputUni = document.getElementById('input-unidades');
-        const inputNom = document.getElementById('input-alimento');
+        // CASO B: DICTADO EN EL MENÚ (Añade el plato directamente al día)
+        else if (destino === 'menu') {
+          const clave = `${fechaExtra}_${momentoExtra}`;
+          if (!menus[clave]) menus[clave] = { items: [], consumido: false };
+          
+          const platoTexto = texto.charAt(0).toUpperCase() + texto.slice(1);
+          menus[clave].items.push({ id: null, nombre: platoTexto });
 
-        if (unidadesDetectadas) {
-          inputUni.value = unidadesDetectadas;
+          await fetch('/api/menu', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fecha: fechaExtra, momento: momentoExtra, items: menus[clave].items, consumido: false })
+          });
+
+          avisar(`Añadido a ${momentoExtra}`);
+          renderizarDias();
         }
 
-        const textoFinal = palabras.join(' ');
-        inputNom.value = textoFinal.charAt(0).toUpperCase() + textoFinal.slice(1);
-        
-        avisar('Reconocido. Pulsa + Añadir');
+        // CASO C: DICTADO EN LA LISTA DE LA COMPRA
+        else if (destino === 'compra') {
+          const articulo = texto.charAt(0).toUpperCase() + texto.slice(1);
+          await mandarACompra(articulo);
+        }
       };
 
       try {
         rec.start();
       } catch (err) {
-        btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse');
-        alert('No se pudo iniciar el micro: ' + err.message);
+        if (btn) btn.classList.remove('bg-rose-600', 'text-white', 'animate-pulse');
       }
     }
 
