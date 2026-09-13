@@ -34,9 +34,7 @@ export async function onRequest(context) {
       if (method === 'PATCH') {
         const body = await request.json();
         
-        // Sumar o restar unidades
         if (body.delta !== undefined) {
-          // Obtener el alimento actual
           const alim = await db.prepare("SELECT * FROM alimentos WHERE id = ?").bind(body.id).first();
           if (alim) {
             const nuevasUnidades = Math.max(0, alim.unidades + body.delta);
@@ -45,7 +43,7 @@ export async function onRequest(context) {
             await db.prepare("UPDATE alimentos SET unidades = ?, en_stock = ? WHERE id = ?")
               .bind(nuevasUnidades, enStock, body.id).run();
 
-            // SI SE AGOTÓ AL RESTAR (delta < 0 y unidades = 0): METER DIRECTO A LA LISTA DE LA COMPRA
+            // Si se agota al consumir: directo a la compra
             if (body.delta < 0 && nuevasUnidades === 0) {
               const existeEnCompra = await db.prepare("SELECT * FROM lista_compra WHERE LOWER(TRIM(item)) = LOWER(?) AND comprado = 0")
                 .bind(alim.nombre.trim()).first();
@@ -104,7 +102,7 @@ export async function onRequest(context) {
       }
     }
 
-    // 3. COMPRA
+    // 3. COMPRA (AL TACHAR, REPONE LA DESPENSA AUTOMÁTICAMENTE)
     if (path === 'compra') {
       if (method === 'GET') {
         const { results } = await db.prepare("SELECT * FROM lista_compra ORDER BY comprado ASC, created_at DESC").all();
@@ -125,8 +123,38 @@ export async function onRequest(context) {
       }
       if (method === 'PATCH') {
         const body = await request.json();
+        
+        // 1. Actualizar estado de compra
         await db.prepare("UPDATE lista_compra SET comprado = ? WHERE id = ?")
           .bind(body.comprado, body.id).run();
+
+        // 2. Si se tacha (comprado = 1) o se desmarca (comprado = 0), sincronizar con la despensa
+        const itemCompra = await db.prepare("SELECT * FROM lista_compra WHERE id = ?").bind(body.id).first();
+        if (itemCompra) {
+          const nomLimpio = itemCompra.item.trim();
+          const existente = await db.prepare("SELECT * FROM alimentos WHERE LOWER(TRIM(nombre)) = LOWER(?)")
+            .bind(nomLimpio).first();
+
+          if (body.comprado === 1) {
+            // Se compró: reponer +1 unidad (o +2 si estaba a 0)
+            if (existente) {
+              const incremento = existente.unidades === 0 ? 2 : 1;
+              await db.prepare("UPDATE alimentos SET unidades = unidades + ?, en_stock = 1 WHERE id = ?")
+                .bind(incremento, existente.id).run();
+            } else {
+              const idNuevo = crypto.randomUUID();
+              await db.prepare("INSERT INTO alimentos (id, nombre, icono, unidades, en_stock) VALUES (?, ?, '', 2, 1)")
+                .bind(idNuevo, nomLimpio).run();
+            }
+          } else {
+            // Se desmarcó por error: restar 1 unidad
+            if (existente) {
+              await db.prepare("UPDATE alimentos SET unidades = MAX(0, unidades - 1), en_stock = CASE WHEN unidades - 1 > 0 THEN 1 ELSE 0 END WHERE id = ?")
+                .bind(existente.id).run();
+            }
+          }
+        }
+
         return Response.json({ success: true });
       }
       if (method === 'DELETE') {
